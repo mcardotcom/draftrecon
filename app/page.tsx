@@ -7,6 +7,7 @@ import FeaturesSection from '@/components/FeaturesSection'
 import TestimonialsSection from '@/components/TestimonialsSection'
 import PricingSection from '@/components/PricingSection'
 import Footer from '@/components/Footer'
+import { motion } from 'framer-motion'
 
 const testimonials = [
   {

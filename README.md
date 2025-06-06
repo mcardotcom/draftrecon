@@ -2,40 +2,25 @@
 
 A high-signal, low-noise scouting platform where AI-assisted builders and automation pros showcase their work on "player cards." Instead of job applications, companies scout and draft talent based on what they've built.
 
-## 🚀 Getting Started
+A high-signal scouting platform for AI-assisted builders.
 
-### Prerequisites
+## 🎯 Project Overview
+DraftRecon flips the hiring model: talent showcases what they've built via “Player Cards,” and companies draft them directly — no resumes, no job posts.
 
-- Node.js 18+ and npm
-- Supabase account
-- Vercel account (for deployment)
+## 👥 Target Users
+- **Talent**: AI builders, automation engineers, indie hackers
+- **Recruiters**: Founders, CTOs, tech recruiters
 
-### Installation
+## 💡 Core Features
+- Talent can build & publish a “Player Card”
+- Recruiters browse, filter, and save top cards
+- No user feed or inbox — just signal
+- Private by default, no profile browsing
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/draftrecon.git
-cd draftrecon
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env.local` file in the root directory with your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:3000`.
-
+## 🔐 Auth & Roles
+- Talent: manage own profile
+- Recruiter: browse + shortlist
+- Admin (you): manual moderation via Supabase
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14 with TypeScript
@@ -55,14 +40,7 @@ draftrecon/
 └── types/              # TypeScript type definitions
 ```
 
-## 🔐 Environment Variables
 
-Create a `.env.local` file with the following variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
 
 ## 📝 License
 

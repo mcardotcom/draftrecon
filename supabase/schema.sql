@@ -77,9 +77,26 @@ create policy "Users can delete their own shortlists"
 -- Create function to handle new user signup
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  user_full_name text;
+  user_role text;
 begin
+  -- Get full_name from metadata or fallback to email username
+  user_full_name := coalesce(
+    new.raw_user_meta_data->>'full_name',
+    split_part(new.email, '@', 1)
+  );
+  
+  -- Get role from metadata or default to 'talent'
+  user_role := coalesce(
+    new.raw_user_meta_data->>'role',
+    'talent'
+  );
+  
+  -- Insert the profile
   insert into public.profiles (id, full_name, role)
-  values (new.id, new.raw_user_meta_data->>'full_name', 'talent');
+  values (new.id, user_full_name, user_role);
+  
   return new;
 end;
 $$ language plpgsql security definer;

@@ -1,5 +1,7 @@
 import { Profile } from '@/lib/supabase'
 import Image from 'next/image'
+import Badge from './Badge'
+import CTAButton from './CTAButton'
 
 interface PlayerCardProps {
   profile: Profile
@@ -9,7 +11,7 @@ interface PlayerCardProps {
 
 export default function PlayerCard({ profile, onShortlist, isShortlisted }: PlayerCardProps) {
   return (
-    <div className="card hover:shadow-lg transition-shadow">
+    <div className="card hover:shadow-lg transition-shadow bg-white rounded-2xl p-6">
       <div className="flex items-start gap-4">
         {profile.avatar_url ? (
           <Image
@@ -33,17 +35,17 @@ export default function PlayerCard({ profile, onShortlist, isShortlisted }: Play
           
           <div className="flex flex-wrap gap-2 mb-4">
             {profile.skills.map((skill) => (
-              <span key={skill} className="badge">
+              <Badge key={skill} variant="skill">
                 {skill}
-              </span>
+              </Badge>
             ))}
           </div>
           
           <div className="flex flex-wrap gap-2 mb-4">
             {profile.tools.map((tool) => (
-              <span key={tool} className="badge">
+              <Badge key={tool} variant="tool">
                 {tool}
-              </span>
+              </Badge>
             ))}
           </div>
           
@@ -65,14 +67,13 @@ export default function PlayerCard({ profile, onShortlist, isShortlisted }: Play
           )}
           
           {onShortlist && (
-            <button
+            <CTAButton
               onClick={onShortlist}
-              className={`mt-4 btn-primary ${
-                isShortlisted ? 'bg-signal-green' : ''
-              }`}
+              variant={isShortlisted ? 'secondary' : 'primary'}
+              className="mt-4"
             >
               {isShortlisted ? 'Shortlisted' : 'Add to Shortlist'}
-            </button>
+            </CTAButton>
           )}
         </div>
       </div>

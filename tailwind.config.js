@@ -17,7 +17,7 @@ module.exports = {
         'error-red': '#EF4444',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
@@ -26,7 +26,29 @@ module.exports = {
       maxWidth: {
         'content': '1200px',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: '65ch',
+            color: '#1E293B',
+            h1: {
+              fontFamily: 'Inter',
+              fontWeight: '700',
+            },
+            h2: {
+              fontFamily: 'Inter',
+              fontWeight: '600',
+            },
+            h3: {
+              fontFamily: 'Inter',
+              fontWeight: '600',
+            },
+          },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 } 
