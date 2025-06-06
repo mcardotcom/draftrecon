@@ -4,90 +4,18 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import AuthCheck from '@/components/AuthCheck'
-import { Profile, Skill, Project, Attribute, Endorsement, BuilderStats } from '@/lib/types'
-import BuilderHeader from '@/components/dashboard/BuilderHeader'
-import SkillsToolsSection from '@/components/dashboard/SkillsToolsSection'
-import ProjectsGrid from '@/components/dashboard/ProjectsGrid'
-import ScoutingReport from '@/components/dashboard/ScoutingReport'
-
-// Sample data - replace with real data from your database
-const sampleSkills: Skill[] = [
-  { name: 'Python', level: 'expert', category: 'language' },
-  { name: 'JavaScript', level: 'expert', category: 'language' },
-  { name: 'React', level: 'expert', category: 'framework' },
-  { name: 'Node.js', level: 'expert', category: 'framework' },
-  { name: 'Supabase', level: 'intermediate', category: 'platform' },
-  { name: 'AWS', level: 'intermediate', category: 'platform' },
-  { name: 'Git', level: 'expert', category: 'tool' },
-  { name: 'Docker', level: 'intermediate', category: 'tool' }
-]
-
-const sampleProjects: Project[] = [
-  {
-    id: '1',
-    title: 'Automated Data Pipeline',
-    description: 'Built a real-time data processing pipeline that reduced processing time by 80%',
-    imageUrl: '/project1.jpg',
-    stack: ['Python', 'AWS', 'Docker'],
-    impact: '80% faster processing',
-    link: 'https://github.com/example/project1'
-  },
-  {
-    id: '2',
-    title: 'AI-Powered Analytics Dashboard',
-    description: 'Created an interactive dashboard with ML-powered insights',
-    imageUrl: '/project2.jpg',
-    stack: ['React', 'Node.js', 'TensorFlow'],
-    impact: '50% more accurate predictions',
-    link: 'https://github.com/example/project2'
-  }
-]
-
-const sampleAttributes: Attribute[] = [
-  {
-    name: 'Technical Expertise',
-    score: 9,
-    description: 'Deep understanding of automation tools and best practices'
-  },
-  {
-    name: 'Problem Solving',
-    score: 8,
-    description: 'Excellent at breaking down complex problems into manageable solutions'
-  },
-  {
-    name: 'Communication',
-    score: 7,
-    description: 'Clear and effective communication with stakeholders'
-  },
-  {
-    name: 'Innovation',
-    score: 8,
-    description: 'Consistently brings creative solutions to technical challenges'
-  }
-]
-
-const sampleEndorsements: Endorsement[] = [
-  {
-    id: '1',
-    text: "One of the most skilled automation builders I've worked with. Their solutions are always elegant and efficient.",
-    author: 'Sarah Chen',
-    role: 'CTO',
-    company: 'TechCorp',
-    emoji: '🚀'
-  },
-  {
-    id: '2',
-    text: 'Exceptional problem solver who consistently delivers high-quality solutions.',
-    author: 'Michael Rodriguez',
-    role: 'Engineering Lead',
-    company: 'InnovateAI',
-    emoji: '💡'
-  }
-]
+import { Profile } from '@/lib/types'
+import Image from 'next/image'
+import { GlobeAltIcon, MapPinIcon, ClockIcon, EyeIcon } from '@heroicons/react/24/outline'
+import Sidebar from '@/components/dashboard/Sidebar'
+import ProfileHeader from '@/components/dashboard/ProfileHeader'
+import Card from '@/components/dashboard/Card'
+import DashboardNavbar from '@/components/dashboard/DashboardNavbar'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -108,7 +36,20 @@ export default function DashboardPage() {
           .single()
 
         if (existingProfile) {
-          setProfile(existingProfile)
+          // Update confirmed status if user has clicked magic link
+          if (!existingProfile.confirmed && session.user.email_confirmed_at) {
+            const { data: updatedProfile, error: updateError } = await supabase
+              .from('profiles')
+              .update({ confirmed: true })
+              .eq('id', session.user.id)
+              .select()
+              .single()
+
+            if (updateError) throw updateError
+            setProfile(updatedProfile)
+          } else {
+            setProfile(existingProfile)
+          }
         } else {
           // Create new profile
           const { data: newProfile, error } = await supabase
@@ -116,12 +57,23 @@ export default function DashboardPage() {
             .insert([
               {
                 id: session.user.id,
-                full_name: session.user.email?.split('@')[0] || 'User',
+                full_name: session.user.user_metadata?.full_name,
+                handle: session.user.email?.split('@')[0] || '',
+                email: session.user.email,
+                confirmed: !!session.user.email_confirmed_at,
+                title: 'Automation Builder',
                 bio: '',
-                skills: [],
-                tools: [],
+                current_focus: '',
+                skills: {
+                  languages: [],
+                  frameworks: [],
+                  platforms: [],
+                  tools: []
+                },
                 projects: [],
                 role: 'talent',
+                visibility: 'private',
+                last_updated: new Date().toISOString(),
                 created_at: new Date().toISOString()
               }
             ])
@@ -142,6 +94,28 @@ export default function DashboardPage() {
     setupProfile()
   }, [router])
 
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!profile) return
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          last_updated: new Date().toISOString()
+        })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      setProfile(data)
+      setEditing(null)
+    } catch (error) {
+      console.error('Error updating profile:', error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-midnight-slate flex items-center justify-center">
@@ -154,39 +128,52 @@ export default function DashboardPage() {
     return null
   }
 
-  const stats: BuilderStats = {
-    projects: 12,
-    endorsements: 8,
-    experience: 5
-  }
-
   return (
     <AuthCheck>
-      <div className="min-h-screen bg-midnight-slate">
-        <main className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <BuilderHeader
-            profile={profile}
-            stats={stats}
-          />
-
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            {/* Left Column */}
-            <div className="lg:col-span-1 space-y-8">
-              <SkillsToolsSection skills={sampleSkills} />
-            </div>
-
-            {/* Right Column */}
-            <div className="lg:col-span-2 space-y-8">
-              <ProjectsGrid projects={sampleProjects} />
-              <ScoutingReport
-                attributes={sampleAttributes}
-                endorsements={sampleEndorsements}
-              />
-            </div>
+      <div className="min-h-screen bg-[#0F172A]">
+        <DashboardNavbar />
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8 py-10 px-4 md:px-8 lg:px-12">
+          {/* Sidebar: 1/5 (20%) */}
+          <div className="lg:col-span-1 flex justify-center">
+            <Sidebar />
           </div>
-        </main>
+          {/* Main Content: 4/5 (80%) */}
+          <main className="lg:col-span-4 flex flex-col gap-6">
+            <ProfileHeader />
+            <section className="space-y-6">
+              {/* Bio Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">About</h2>
+                <p className="text-slate-300">Short editable summary paragraph, motivation, mission.</p>
+              </Card>
+              {/* Skills Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">Skills & Tools</h2>
+                <p className="text-slate-300">Grouped tag input with proficiency.</p>
+              </Card>
+              {/* Projects Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">Projects</h2>
+                <p className="text-slate-300">Cards with title, impact, tech tags.</p>
+              </Card>
+              {/* Experience Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">Experience</h2>
+                <p className="text-slate-300">Timeline UI or editable experience.</p>
+              </Card>
+              {/* Uploads Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">Uploads</h2>
+                <p className="text-slate-300">Upload resume, files, demos.</p>
+              </Card>
+              {/* Scouting Stats Card */}
+              <Card>
+                <h2 className="text-lg font-semibold text-white mb-2">Scouting Stats</h2>
+                <p className="text-slate-300">Charts (projects, endorsements, etc.).</p>
+              </Card>
+            </section>
+          </main>
+        </div>
       </div>
     </AuthCheck>
   )

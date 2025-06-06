@@ -2,17 +2,35 @@
 export type Profile = {
   id: string
   full_name: string
-  title?: string
+  handle: string
+  email: string
+  confirmed: boolean
+  title: string
   bio: string
-  skills: string[]
-  tools: string[]
+  current_focus?: string
+  skills: {
+    languages: string[]
+    frameworks: string[]
+    platforms: string[]
+    tools: string[]
+  }
   projects: {
     title: string
     description: string
     url: string
+    stack: string[]
+    impact?: string
   }[]
   avatar_url?: string
   role: 'talent' | 'recruiter' | 'admin'
+  location?: string
+  timezone?: string
+  availability?: {
+    hours: string
+    open_to_work: boolean
+  }
+  visibility: 'public' | 'private' | 'invite-only'
+  last_updated: string
   created_at: string
 }
 

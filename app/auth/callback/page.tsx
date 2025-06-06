@@ -10,20 +10,46 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+        // Get the session from the URL
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        if (error) {
-          console.error('Error getting session:', error)
+        if (sessionError) {
+          console.error('Error getting session:', sessionError)
           router.push('/auth/signin')
           return
         }
 
+        if (!session) {
+          // Try to refresh the session
+          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
+          
+          if (refreshError || !refreshedSession) {
+            console.error('Error refreshing session:', refreshError)
+            router.push('/auth/signin')
+            return
+          }
+        }
+
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            console.log('Auth state changed: SIGNED_IN')
+            router.push('/dashboard')
+          } else if (event === 'SIGNED_OUT') {
+            console.log('Auth state changed: SIGNED_OUT')
+            router.push('/auth/signin')
+          }
+        })
+
+        // If we have a session, redirect to dashboard
         if (session) {
           console.log('Session established, redirecting to dashboard')
           router.push('/dashboard')
-        } else {
-          console.log('No session found, redirecting to sign in')
-          router.push('/auth/signin')
+        }
+
+        // Cleanup subscription
+        return () => {
+          subscription.unsubscribe()
         }
       } catch (error) {
         console.error('Error in auth callback:', error)

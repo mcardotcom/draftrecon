@@ -24,19 +24,32 @@ export default function SignUpPage() {
         throw new Error('Email and full name are required')
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
+      // First, sign up the user with metadata
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
+        password: crypto.randomUUID(), // Generate a random password since we're using magic links
         options: {
           data: {
             full_name: fullName,
             role: 'talent'
-          },
+          }
+        }
+      })
+
+      if (signUpError) {
+        throw signUpError
+      }
+
+      // Then send the magic link
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
-      if (error) {
-        throw error
+      if (otpError) {
+        throw otpError
       }
 
       setMessage('Please check your email for the magic link. If you don\'t see it, check your spam folder.')

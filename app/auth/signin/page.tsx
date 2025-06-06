@@ -15,9 +15,9 @@ export default function SignInPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setMessage('')
     setError('')
-    
+    setMessage('')
+
     try {
       if (!email) {
         throw new Error('Email is required')
@@ -30,14 +30,12 @@ export default function SignInPage() {
         }
       })
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      setMessage('Check your email for the magic link to sign in.')
-    } catch (error: any) {
-      console.error('Sign in error:', error)
-      setError(error.message || 'An error occurred while sending the magic link')
+      setMessage('Check your email for the magic link! Click the link to sign in.')
+    } catch (error) {
+      console.error('Error:', error)
+      setError('Failed to send magic link. Please try again.')
     } finally {
       setLoading(false)
     }
