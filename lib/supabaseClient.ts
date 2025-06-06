@@ -17,13 +17,10 @@ console.log('Initializing Supabase client with URL:', supabaseUrl)
 const customStorage = {
   getItem: (key: string) => {
     if (typeof window === 'undefined') {
-      console.log('Storage getItem called in server context')
       return null
     }
     try {
-      const value = localStorage.getItem(key)
-      console.log('Storage getItem:', key, value ? 'value present' : 'no value')
-      return value
+      return localStorage.getItem(key)
     } catch (error) {
       console.error('Storage getItem error:', error)
       return null
@@ -31,11 +28,9 @@ const customStorage = {
   },
   setItem: (key: string, value: string) => {
     if (typeof window === 'undefined') {
-      console.log('Storage setItem called in server context')
       return
     }
     try {
-      console.log('Storage setItem:', key, 'value length:', value.length)
       localStorage.setItem(key, value)
     } catch (error) {
       console.error('Storage setItem error:', error)
@@ -43,11 +38,9 @@ const customStorage = {
   },
   removeItem: (key: string) => {
     if (typeof window === 'undefined') {
-      console.log('Storage removeItem called in server context')
       return
     }
     try {
-      console.log('Storage removeItem:', key)
       localStorage.removeItem(key)
     } catch (error) {
       console.error('Storage removeItem error:', error)
