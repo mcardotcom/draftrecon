@@ -5,9 +5,8 @@ export default function DashboardNavbar() {
   return (
     <nav className="w-full flex items-center justify-between px-4 md:px-6 lg:px-12 py-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 shadow-sm sticky top-0 z-30">
       {/* Logo (left) */}
-      <div className="flex items-center gap-3">
-        <Image src="/logo.svg" alt="Logo" width={36} height={36} className="h-9 w-9" />
-        <span className="font-bold text-xl text-white tracking-tight">DraftRecon</span>
+      <div className="flex items-center gap-2 text-xl font-bold">
+        <Image src="/draftrecon logo.png" alt="DraftRecon Logo" width={140} height={140} className="rounded-full" />
       </div>
       {/* Search bar (right) */}
       <div className="flex items-center">

@@ -1,12 +1,12 @@
 "use client"
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import HeroSection from '@/components/HeroSection'
-import FeaturesSection from '@/components/FeaturesSection'
-import TestimonialsSection from '@/components/TestimonialsSection'
-import PricingSection from '@/components/PricingSection'
-import Footer from '@/components/Footer'
+import Navbar from '@/components/landing/Navbar'
+import HeroSection from '@/components/landing/HeroSection'
+import FeaturesSection from '@/components/landing/FeaturesSection'
+import TestimonialsSection from '@/components/landing/TestimonialsSection'
+import PricingSection from '@/components/landing/PricingSection'
+import Footer from '@/components/landing/Footer'
 import { motion } from 'framer-motion'
 
 const testimonials = [
