@@ -1,5 +1,5 @@
-create table public.talent_profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+CREATE TABLE public.talent_profiles (
+  id bigint primary key generated always as identity,
   created_at timestamp with time zone default now(),
 
   -- Core Identity
@@ -40,8 +40,8 @@ create table public.talent_profiles (
   is_visible boolean default true
 );
 
-create table hire_profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+CREATE TABLE public.hire_profiles (
+  id bigint primary key generated always as identity,
   created_at timestamp with time zone default now(),
 
   -- Identity
@@ -69,40 +69,39 @@ create table hire_profiles (
   notes text                       -- internal notes, optional
 );
 
-create table hire_profile_members (
-  id uuid primary key default gen_random_uuid(),
-  hire_profile_id uuid references hire_profiles(id) on delete cascade,
-  user_id uuid references auth.users(id) on delete cascade,
+CREATE TABLE public.hire_profile_members (
+  id bigint primary key generated always as identity,
+  hire_profile_id bigint references public.hire_profiles(id) on delete cascade,
+  user_id bigint references auth.users(id) on delete cascade,
   role text check (role in ('owner', 'editor', 'viewer')) default 'editor',
   invited_at timestamp with time zone default now(),
   accepted boolean default false
 );
 
-
-CREATE TABLE shortlists (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  hire_profile_id UUID REFERENCES hire_profiles(id) ON DELETE CASCADE,
-  talent_profile_id UUID REFERENCES talent_profiles(id) ON DELETE CASCADE,
-  tags TEXT[], -- Array of tag labels
-  rating INTEGER CHECK (rating >= 1 AND rating <= 5), -- 1 to 5 star rating
-  notes TEXT, -- Optional notes from the hiring team
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE public.shortlists (
+  id bigint primary key generated always as identity,
+  hire_profile_id bigint references public.hire_profiles(id) on delete cascade,
+  talent_profile_id bigint references public.talent_profiles(id) on delete cascade,
+  tags text[], -- Array of tag labels
+  rating integer check (rating >= 1 and rating <= 5), -- 1 to 5 star rating
+  notes text, -- Optional notes from the hiring team
+  created_at timestamp default now(),
+  updated_at timestamp default now()
 );
-CREATE TABLE shortlist_activity (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  shortlist_id UUID REFERENCES shortlists(id) ON DELETE CASCADE,
-  actor_id UUID REFERENCES users(id), -- Who made the action
-  action_type TEXT CHECK (action_type IN (
+
+CREATE TABLE public.shortlist_activity (
+  id bigint primary key generated always as identity,
+  shortlist_id bigint references public.shortlists(id) on delete cascade,
+  actor_id bigint references auth.users(id), -- Who made the action
+  action_type text check (action_type in (
     'added', 'removed', 'updated_rating', 'added_tag', 'removed_tag', 'added_note'
   )),
-  action_detail TEXT, -- Optional: e.g., "Set rating to 4", "Added tag: frontend"
-  created_at TIMESTAMP DEFAULT NOW()
+  action_detail text, -- Optional: e.g., "Set rating to 4", "Added tag: frontend"
+  created_at timestamp default now()
 );
 
-
 -- Enable RLS on all tables
-ALTER TABLE talent_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE hire_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shortlists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shortlist_activity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.talent_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hire_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shortlists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shortlist_activity ENABLE ROW LEVEL SECURITY;
