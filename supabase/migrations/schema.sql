@@ -1,107 +1,113 @@
+-- Talent Profiles
 CREATE TABLE public.talent_profiles (
-  id bigint primary key generated always as identity,
-  created_at timestamp with time zone default now(),
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 
   -- Core Identity
-  name text,
-  username text unique,
-  avatar_url text,             -- profile picture
-  headline text,               -- short title like “AI Engineer & Indie Hacker”
-  bio text,                    -- longer paragraph
+  name TEXT,
+  username TEXT UNIQUE,
+  avatar_url TEXT,             -- profile picture
+  headline TEXT,               -- short title like “AI Engineer & Indie Hacker”
+  bio TEXT,                    -- longer paragraph
 
   -- Contact & Socials
-  location text,
-  website text,
-  email text,
-  twitter text,
-  github text,
-  linkedin text,
-  youtube text,
-  loom text,
+  location TEXT,
+  website TEXT,
+  email TEXT,
+  twitter TEXT,
+  github TEXT,
+  linkedin TEXT,
+  youtube TEXT,
+  loom TEXT,
 
   -- Professional Details
-  primary_role text,
-  current_company text,
-  industry text,
-  employment_type text,        -- e.g., "full-time", "freelance", "open to both"
-  is_open_to_opportunities boolean default false,
+  primary_role TEXT,
+  current_company TEXT,
+  industry TEXT,
+  employment_type TEXT,        -- e.g., "full-time", "freelance", "open to both"
+  is_open_to_opportunities BOOLEAN DEFAULT FALSE,
 
   -- Skills & Tags
-  skills text[],               -- free-form or tag-based
-  tools text[],                -- e.g., "GPT-4", "Zapier", "TypeScript"
-  specialties text[],          -- e.g., "growth hacking", "LLM chaining"
-  
+  skills TEXT[],               -- free-form or tag-based
+  tools TEXT[],                -- e.g., "GPT-4", "Zapier", "TypeScript"
+  specialties TEXT[],          -- e.g., "growth hacking", "LLM chaining"
+
   -- Stats & Signal
-  years_of_experience int,
-  portfolio_url text,
-  resume_url text,
+  years_of_experience INT,
+  portfolio_url TEXT,
+  resume_url TEXT,
 
   -- Visibility
-  is_visible boolean default true
+  is_visible BOOLEAN DEFAULT TRUE
 );
 
+-- Hire Profiles
 CREATE TABLE public.hire_profiles (
-  id bigint primary key generated always as identity,
-  created_at timestamp with time zone default now(),
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 
   -- Identity
-  name text,                       -- John Smith or Acme Inc
-  avatar_url text,                 -- logo or person
-  headline text,                   -- e.g., “Hiring for AI Startup” or “Recruiter at OpenAI”
-  bio text,                        -- optional longer description
+  name TEXT,                       -- John Smith or Acme Inc
+  avatar_url TEXT,                 -- logo or person
+  headline TEXT,                   -- e.g., “Hiring for AI Startup” or “Recruiter at OpenAI”
+  bio TEXT,                        -- optional longer description
 
   -- Contact & Social
-  email text,
-  website text,
-  linkedin text,
-  twitter text,
+  email TEXT,
+  website TEXT,
+  linkedin TEXT,
+  twitter TEXT,
 
   -- Hiring Intent
-  company_name text,
-  company_size text,               -- e.g., "1–10", "11–50", "Enterprise"
-  role_title text,                 -- What they’re hiring for (e.g., “AI engineer”)
-  job_type text,                   -- e.g., "full-time", "freelance", "contract"
-  job_location text,               -- e.g., "Remote", "SF Bay Area"
-  is_hiring boolean default false,
+  company_name TEXT,
+  company_size TEXT,               -- e.g., "1–10", "11–50", "Enterprise"
+  role_title TEXT,                 -- What they’re hiring for (e.g., “AI engineer”)
+  job_type TEXT,                   -- e.g., "full-time", "freelance", "contract"
+  job_location TEXT,               -- e.g., "Remote", "SF Bay Area"
+  is_hiring BOOLEAN DEFAULT FALSE,
 
   -- Shortlist Behavior
-  can_shortlist boolean default true,
-  notes text                       -- internal notes, optional
+  can_shortlist BOOLEAN DEFAULT TRUE,
+  notes TEXT                       -- internal notes, optional
 );
 
+-- Team Members for Hire Profiles
 CREATE TABLE public.hire_profile_members (
-  id bigint primary key generated always as identity,
-  hire_profile_id bigint references public.hire_profiles(id) on delete cascade,
-  user_id bigint references auth.users(id) on delete cascade,
-  role text check (role in ('owner', 'editor', 'viewer')) default 'editor',
-  invited_at timestamp with time zone default now(),
-  accepted boolean default false
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  hire_profile_id UUID REFERENCES hire_profiles(user_id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('owner', 'editor', 'viewer')) DEFAULT 'editor',
+  invited_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  accepted BOOLEAN DEFAULT FALSE
 );
 
+-- Shortlists
 CREATE TABLE public.shortlists (
-  id bigint primary key generated always as identity,
-  hire_profile_id bigint references public.hire_profiles(id) on delete cascade,
-  talent_profile_id bigint references public.talent_profiles(id) on delete cascade,
-  tags text[], -- Array of tag labels
-  rating integer check (rating >= 1 and rating <= 5), -- 1 to 5 star rating
-  notes text, -- Optional notes from the hiring team
-  created_at timestamp default now(),
-  updated_at timestamp default now()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  hire_profile_id UUID REFERENCES hire_profiles(user_id) ON DELETE CASCADE,
+  talent_profile_id UUID REFERENCES talent_profiles(user_id) ON DELETE CASCADE,
+  tags TEXT[], -- Array of tag labels
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5), -- 1 to 5 star rating
+  notes TEXT, -- Optional notes from the hiring team
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
+-- Shortlist Activity Log
 CREATE TABLE public.shortlist_activity (
-  id bigint primary key generated always as identity,
-  shortlist_id bigint references public.shortlists(id) on delete cascade,
-  actor_id bigint references auth.users(id), -- Who made the action
-  action_type text check (action_type in (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  shortlist_id UUID REFERENCES shortlists(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES auth.users(id),
+  action_type TEXT CHECK (action_type IN (
     'added', 'removed', 'updated_rating', 'added_tag', 'removed_tag', 'added_note'
   )),
-  action_detail text, -- Optional: e.g., "Set rating to 4", "Added tag: frontend"
-  created_at timestamp default now()
+  action_detail TEXT, -- Optional: e.g., "Set rating to 4", "Added tag: frontend"
+  created_at TIMESTAMP DEFAULT now()
 );
 
--- Enable RLS on all tables
+-- Enable RLS
 ALTER TABLE public.talent_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hire_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hire_profile_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shortlists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shortlist_activity ENABLE ROW LEVEL SECURITY;
