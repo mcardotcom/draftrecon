@@ -7,7 +7,8 @@ import Link from 'next/link'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,18 +21,18 @@ export default function SignUpPage() {
     setError('')
     
     try {
-      if (!email || !fullName) {
-        throw new Error('Email and full name are required')
+      if (!email || !name || !username) {
+        throw new Error('Email, name, and username are required')
       }
 
-      // First, sign up the user with metadata
+      // Sign up the user with metadata matching the new schema
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: crypto.randomUUID(), // Generate a random password since we're using magic links
         options: {
           data: {
-            full_name: fullName,
-            role: 'talent'
+            name,
+            username
           }
         }
       })
@@ -70,8 +71,16 @@ export default function SignUpPage() {
             className="input"
             type="text"
             placeholder="Your name"
-            value={fullName}
-            onChange={e => setFullName(e.target.value)}
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
             required
           />
           <input

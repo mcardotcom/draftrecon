@@ -12,4 +12,5 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+  babelConfig: './babel.jest.config.js',
 }; 

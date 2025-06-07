@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from './supabaseClient'
-import { Profile } from './types'
+import { TalentProfile } from './types'
 
-export function useProfile() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+export function useTalentProfile() {
+  const [profile, setProfile] = useState<TalentProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -18,47 +18,24 @@ export function useProfile() {
           return
         }
         const { data: existingProfile } = await supabase
-          .from('profiles')
+          .from('talent_profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .single()
         if (existingProfile) {
-          if (!existingProfile.confirmed && session.user.email_confirmed_at) {
-            const { data: updatedProfile, error: updateError } = await supabase
-              .from('profiles')
-              .update({ confirmed: true })
-              .eq('id', session.user.id)
-              .select()
-              .single()
-            if (updateError) throw updateError
-            setProfile(updatedProfile)
-          } else {
-            setProfile(existingProfile)
-          }
+          setProfile(existingProfile)
         } else {
+          // Create a new profile with minimal required fields
           const { data: newProfile, error } = await supabase
-            .from('profiles')
+            .from('talent_profiles')
             .insert([
               {
-                id: session.user.id,
-                full_name: session.user.user_metadata?.full_name,
-                handle: session.user.email?.split('@')[0] || '',
+                user_id: session.user.id,
+                name: session.user.user_metadata?.name || '',
+                username: session.user.user_metadata?.username || '',
                 email: session.user.email,
-                confirmed: !!session.user.email_confirmed_at,
-                title: 'Automation Builder',
-                bio: '',
-                current_focus: '',
-                skills: {
-                  languages: [],
-                  frameworks: [],
-                  platforms: [],
-                  tools: []
-                },
-                projects: [],
-                role: 'talent',
-                visibility: 'private',
-                last_updated: new Date().toISOString(),
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                is_visible: true
               }
             ])
             .select()
@@ -76,16 +53,13 @@ export function useProfile() {
     setupProfile()
   }, [router])
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: Partial<TalentProfile>) => {
     if (!profile) return
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          ...updates,
-          last_updated: new Date().toISOString()
-        })
-        .eq('id', profile.id)
+        .from('talent_profiles')
+        .update(updates)
+        .eq('user_id', profile.user_id)
         .select()
         .single()
       if (error) throw error

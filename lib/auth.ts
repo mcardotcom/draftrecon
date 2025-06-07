@@ -1,19 +1,17 @@
-import { supabase } from './supabase'
-import { Profile } from './supabase'
+import { supabase } from './supabaseClient'
+import { TalentProfile } from './types'
 import { handleError, handleSuccess } from './toast'
 
-export type UserRole = 'talent' | 'recruiter' | 'admin'
-
-export async function getCurrentUser() {
+export async function getCurrentTalentProfile(): Promise<TalentProfile | null> {
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) throw error
     if (!user) return null
 
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('talent_profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (profileError) throw profileError
@@ -24,27 +22,7 @@ export async function getCurrentUser() {
   }
 }
 
-export async function getUserRole(): Promise<UserRole | null> {
-  try {
-    const profile = await getCurrentUser()
-    return profile?.role || null
-  } catch (error) {
-    handleError(error)
-    return null
-  }
-}
-
-export async function isAdmin(): Promise<boolean> {
-  try {
-    const role = await getUserRole()
-    return role === 'admin'
-  } catch (error) {
-    handleError(error)
-    return false
-  }
-}
-
-export async function requireAuth() {
+export async function requireTalentAuth() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) throw error
@@ -58,27 +36,15 @@ export async function requireAuth() {
   }
 }
 
-export async function requireRole(role: UserRole) {
-  try {
-    const userRole = await getUserRole()
-    if (userRole !== role) {
-      throw new Error(`Role ${role} required`)
-    }
-  } catch (error) {
-    handleError(error)
-    throw error
-  }
-}
-
-export async function updateProfile(profile: Partial<Profile>) {
+export async function updateTalentProfile(profile: Partial<TalentProfile>) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from('talent_profiles')
       .update(profile)
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
