@@ -25,35 +25,63 @@ export default function SignUpPage() {
         throw new Error('Email, name, and username are required')
       }
 
+      // Check if username is already taken
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('talent_profiles')
+        .select('username')
+        .ilike('username', username)
+
+      if (checkError) {
+        console.error('Error checking username:', checkError)
+        throw new Error('Error checking username availability')
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        throw new Error('This username is already taken. Please choose another one.')
+      }
+
       // Sign up the user with metadata matching the new schema
-      const { error: signUpError } = await supabase.auth.signUp({
+      console.log('Attempting signup with:', { email, name, username })
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password: crypto.randomUUID(), // Generate a random password since we're using magic links
         options: {
           data: {
             name,
-            username
-          }
-        }
-      })
-
-      if (signUpError) {
-        throw signUpError
-      }
-
-      // Then send the magic link
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
+            username,
+            role: 'talent' // Explicitly set role to ensure correct profile creation
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
-      if (otpError) {
-        throw otpError
+      console.log('Signup response:', { data: signUpData, error: signUpError })
+
+      if (signUpError) {
+        console.error('Signup error:', signUpError)
+        if (signUpError.message.includes('rate limit')) {
+          throw new Error('Too many signup attempts. Please wait 60 seconds before trying again.')
+        }
+        throw signUpError
       }
 
-      setMessage('Please check your email for the magic link. If you don\'t see it, check your spam folder.')
+      if (!signUpData?.user) {
+        throw new Error('Failed to create user account')
+      }
+
+      // Log the user data to verify metadata
+      console.log('Created user:', {
+        id: signUpData.user.id,
+        email: signUpData.user.email,
+        metadata: signUpData.user.user_metadata
+      })
+
+      // Check if email confirmation is required
+      if (signUpData.user.confirmed_at === null) {
+        setMessage('Please check your email for the magic link. If you don\'t see it, check your spam folder.')
+      } else {
+        setMessage('Account created successfully! You can now log in.')
+      }
     } catch (error: any) {
       console.error('Sign up error:', error)
       setError(error.message || 'An error occurred during sign up')

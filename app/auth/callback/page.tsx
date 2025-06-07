@@ -30,22 +30,22 @@ export default function AuthCallbackPage() {
           }
         }
 
-        // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_IN' && session) {
-            console.log('Auth state changed: SIGNED_IN')
-            router.push('/dashboard')
-          } else if (event === 'SIGNED_OUT') {
-            console.log('Auth state changed: SIGNED_OUT')
-            router.push('/auth/signin')
-          }
-        })
-
         // If we have a session, redirect to dashboard
         if (session) {
           console.log('Session established, redirecting to dashboard')
           router.push('/dashboard')
+          return
         }
+
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event)
+          if (event === 'SIGNED_IN' && session) {
+            router.push('/dashboard')
+          } else if (event === 'SIGNED_OUT') {
+            router.push('/auth/signin')
+          }
+        })
 
         // Cleanup subscription
         return () => {
