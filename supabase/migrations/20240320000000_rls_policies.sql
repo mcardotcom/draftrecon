@@ -1,76 +1,102 @@
--- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+-- Enable RLS
+ALTER TABLE talent_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hire_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shortlists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shortlist_activity ENABLE ROW LEVEL SECURITY;
 
--- Profiles table policies
-CREATE POLICY "Public profiles are viewable by everyone"
-ON profiles FOR SELECT
-USING (true);
+-- RLS for talent_profiles
+CREATE POLICY "Anyone can read public talent profiles"
+  ON talent_profiles FOR SELECT
+  USING (true);
 
-CREATE POLICY "Users can insert their own profile"
-ON profiles FOR INSERT
-WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can insert their own talent profile"
+  ON talent_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own profile"
-ON profiles FOR UPDATE
-USING (auth.uid() = id);
+CREATE POLICY "Users can update their own talent profile"
+  ON talent_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own profile"
-ON profiles FOR DELETE
-USING (auth.uid() = id);
+CREATE POLICY "Users can delete their own talent profile"
+  ON talent_profiles FOR DELETE
+  USING (auth.uid() = user_id);
 
--- Companies table policies
-CREATE POLICY "Companies are viewable by everyone"
-ON companies FOR SELECT
-USING (true);
+-- RLS for hire_profiles
+CREATE POLICY "Anyone can view public hire profiles"
+  ON hire_profiles FOR SELECT
+  USING (true);
 
-CREATE POLICY "Users can insert their own company"
-ON companies FOR INSERT
-WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can insert their own hire profile"
+  ON hire_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own company"
-ON companies FOR UPDATE
-USING (auth.uid() = id);
+CREATE POLICY "Users can update their own hire profile"
+  ON hire_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own company"
-ON companies FOR DELETE
-USING (auth.uid() = id);
+CREATE POLICY "Users can delete their own hire profile"
+  ON hire_profiles FOR DELETE
+  USING (auth.uid() = user_id);
 
--- Shortlists table policies
-CREATE POLICY "Users can view their own shortlists"
-ON shortlists FOR SELECT
-USING (auth.uid() = recruiter_id);
+-- RLS for shortlists
+CREATE POLICY "Users can read their own shortlists"
+  ON shortlists FOR SELECT
+  USING (auth.uid() = hire_profile_id);
 
 CREATE POLICY "Users can insert their own shortlists"
-ON shortlists FOR INSERT
-WITH CHECK (auth.uid() = recruiter_id);
+  ON shortlists FOR INSERT
+  WITH CHECK (auth.uid() = hire_profile_id);
 
 CREATE POLICY "Users can delete their own shortlists"
-ON shortlists FOR DELETE
-USING (auth.uid() = recruiter_id);
+  ON shortlists FOR DELETE
+  USING (auth.uid() = hire_profile_id);
 
--- Create function to check if user is admin
+-- RLS for shortlist_activity
+CREATE POLICY "Users can read their own activity logs"
+  ON shortlist_activity FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM shortlists
+      WHERE shortlists.id = shortlist_id
+      AND auth.uid() = shortlists.hire_profile_id
+    )
+  );
+
+CREATE POLICY "Users can insert activity on their shortlists"
+  ON shortlist_activity FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM shortlists
+      WHERE shortlists.id = shortlist_id
+      AND auth.uid() = shortlists.hire_profile_id
+    )
+  );
+
+-- Admin access logic
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM profiles
+    SELECT 1 FROM auth.users
     WHERE id = auth.uid()
-    AND role = 'admin'
+    AND email LIKE '%@yourdomain.com' -- Change this to match your admin logic
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Admin policies
-CREATE POLICY "Admins can do everything on profiles"
-ON profiles
-USING (is_admin());
+-- Admin override policies
+CREATE POLICY "Admins can access all talent profiles"
+  ON talent_profiles
+  USING (is_admin());
 
-CREATE POLICY "Admins can do everything on companies"
-ON companies
-USING (is_admin());
+CREATE POLICY "Admins can access all hire profiles"
+  ON hire_profiles
+  USING (is_admin());
 
-CREATE POLICY "Admins can do everything on shortlists"
-ON shortlists
-USING (is_admin()); 
+CREATE POLICY "Admins can access all shortlists"
+  ON shortlists
+  USING (is_admin());
+
+CREATE POLICY "Admins can access all shortlist activity"
+  ON shortlist_activity
+  USING (is_admin());
